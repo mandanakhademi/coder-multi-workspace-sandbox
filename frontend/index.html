@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDS Coder Frontend</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; background: #f4f6f8; color: #333; }
+        .card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 600px; margin-bottom: 20px; }
+        .status-badge { background: #d4edda; color: #155724; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; }
+        button { background: #005a36; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        button:hover { background: #004428; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>🌐 Coder UI Sandbox Workspace</h1>
+        <p>This frontend application is running on port <strong>3000</strong>.</p>
+        <button id="fetchBtn">Fetch Data from Backend</button>
+    </div>
+
+    <div class="card" id="apiResponseCard" style="display: none;">
+        <h3>📡 Backend Connection Status:</h3>
+        <p id="backendStatus"><span class="status-badge">Connecting...</span></p>
+        <h3>📋 Data Retrieved:</h3>
+        <ul id="dataList"></ul>
+    </div>
+
+    <script type="module">
+        // In Approach 1, both run in one workspace, so localhost works.
+        // In Approach 2, we will swap 'localhost:8000' for your live Coder backend URL!
+        const BACKEND_URL = window.env?.VITE_API_URL || 'http://localhost:8000';
+
+        document.getElementById('fetchBtn').addEventListener('click', async () => {
+            const responseCard = document.getElementById('apiResponseCard');
+            const statusEl = document.getElementById('backendStatus');
+            const listEl = document.getElementById('dataList');
+            
+            responseCard.style.display = 'block';
+            listEl.innerHTML = '';
+            
+            try {
+                // 1. Fetch from root endpoint
+                const rootRes = await fetch(`${BACKEND_URL}/`);
+                const rootData = await rootRes.json();
+                statusEl.innerHTML = `<span class="status-badge">${rootData.message}</span>`;
+                
+                // 2. Fetch from data endpoint
+                const dataRes = await fetch(`${BACKEND_URL}/api/data`);
+                const data = await dataRes.json();
+                
+                data.items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${item.name}</strong> - ${item.complete ? '✅ Done' : '⏳ In Progress'}`;
+                    listEl.appendChild(li);
+                });
+            } catch (error) {
+                statusEl.innerHTML = `<span style="color: red; font-weight: bold;">❌ Cannot connect to backend at ${BACKEND_URL}</span>`;
+                console.error("Connection error:", error);
+            }
+        });
+    </script>
+</body>
+</html>
