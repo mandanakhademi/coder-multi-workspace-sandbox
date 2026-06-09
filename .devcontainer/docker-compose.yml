@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # The primary workspace container where you will edit code and run commands
+  workspace:
+    image: mcr.microsoft.com/devcontainers/python:3.11
+    volumes:
+      - ..:/workspace:cached
+    network_mode: service:backend # Seamlessly links workspace network to the backend
+
+  # The automated backend service
+  backend:
+    image: mcr.microsoft.com/devcontainers/python:3.11
+    volumes:
+      - ../backend:/workspace/backend
+    working_dir: /workspace/backend
+    command: sh -c "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+
+  # The automated frontend service
+  frontend:
+    image: mcr.microsoft.com/devcontainers/javascript-node:18
+    volumes:
+      - ../frontend:/workspace/frontend
+    working_dir: /workspace/frontend
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3000:3000"
