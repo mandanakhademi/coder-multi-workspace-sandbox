@@ -28,35 +28,35 @@
     </div>
 
     <script type="module">
-        // In Approach 1, both run in one workspace, so localhost works.
-        // In Approach 2, we will swap 'localhost:8000' for your live Coder backend URL!
-        const BACKEND_URL = window.env?.VITE_API_URL || 'http://localhost:8000';
+        // All API calls will be prefixed with /api, which is then handled by the Vite proxy.
+        // This makes the frontend code environment-agnostic.
+        const API_PROXY_PATH = '/api';
 
         document.getElementById('fetchBtn').addEventListener('click', async () => {
             const responseCard = document.getElementById('apiResponseCard');
             const statusEl = document.getElementById('backendStatus');
             const listEl = document.getElementById('dataList');
-            
+
             responseCard.style.display = 'block';
             listEl.innerHTML = '';
-            
+
             try {
-                // 1. Fetch from root endpoint
-                const rootRes = await fetch(`${BACKEND_URL}/`);
+                // 1. Fetch from the backend's root endpoint (proxied)
+                const rootRes = await fetch(`${API_PROXY_PATH}/`);
                 const rootData = await rootRes.json();
                 statusEl.innerHTML = `<span class="status-badge">${rootData.message}</span>`;
-                
-                // 2. Fetch from data endpoint
-                const dataRes = await fetch(`${BACKEND_URL}/api/data`);
+
+                // 2. Fetch from the backend's data endpoint (proxied)
+                const dataRes = await fetch(`${API_PROXY_PATH}/data`);
                 const data = await dataRes.json();
-                
+
                 data.items.forEach(item => {
                     const li = document.createElement('li');
                     li.innerHTML = `<strong>${item.name}</strong> - ${item.complete ? '✅ Done' : '⏳ In Progress'}`;
                     listEl.appendChild(li);
                 });
             } catch (error) {
-                statusEl.innerHTML = `<span style="color: red; font-weight: bold;">❌ Cannot connect to backend at ${BACKEND_URL}</span>`;
+                statusEl.innerHTML = `<span style="color: red; font-weight: bold;">❌ Connection Error: Is the backend running and the proxy configured?</span>`;
                 console.error("Connection error:", error);
             }
         });
