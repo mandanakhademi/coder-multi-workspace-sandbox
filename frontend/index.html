@@ -3,60 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GDS Coder Frontend</title>
+    <title>GDS Coder Frontend - Hybrid Core</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; background: #f4f6f8; color: #333; }
         .card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 600px; margin-bottom: 20px; }
         .status-badge { background: #d4edda; color: #155724; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; }
         button { background: #005a36; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em; }
         button:hover { background: #004428; }
+        .url-display { font-family: monospace; background: #e9ecef; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; color: #555; word-break: break-all; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <h1>🌐 Coder UI Sandbox Workspace</h1>
-        <p>This frontend application is running on port <strong>3000</strong>.</p>
+        <p>This adaptive application detects and routes traffic automatically.</p>
         <button id="fetchBtn">Fetch Data from Backend</button>
     </div>
 
     <div class="card" id="apiResponseCard" style="display: none;">
+        <h3>🔗 Evaluated Target URL:</h3>
+        <p class="url-display" id="targetBackendUrl"></p>
+
         <h3>📡 Backend Connection Status:</h3>
         <p id="backendStatus"><span class="status-badge">Connecting...</span></p>
+        
         <h3>📋 Data Retrieved:</h3>
         <ul id="dataList"></ul>
     </div>
 
-    <script type="module">
-        // All API calls will be prefixed with /api, which is then handled by the Vite proxy.
-        // This makes the frontend code environment-agnostic.
-        const API_PROXY_PATH = '/api';
+    <script>
+        const currentOrigin = window.location.origin;
+        const currentPath = window.location.pathname;
+
+        // === AUTOMATED ARCHITECTURE ROUTING DETECTOR ===
+        // If the current window path mentions approach-1 or doesn't match the approach-2 layout, 
+        // fallback to Approach 1's relative local Vite proxy route.
+        const isApproach2 = currentPath.includes('sandbox-approach-2');
+        
+        const BACKEND_URL = isApproach2 
+            ? `${currentOrigin}/@mandanakhademi/sandbox-approach-2-backend-2.main/apps/backend`
+            : '/api'; // Falls back cleanly to Approach 1's internal container proxy bridge
 
         document.getElementById('fetchBtn').addEventListener('click', async () => {
             const responseCard = document.getElementById('apiResponseCard');
+            const urlDisplayEl = document.getElementById('targetBackendUrl');
             const statusEl = document.getElementById('backendStatus');
             const listEl = document.getElementById('dataList');
-
+            
             responseCard.style.display = 'block';
+            urlDisplayEl.textContent = BACKEND_URL === '/api' ? `${window.location.host}/api` : BACKEND_URL;
             listEl.innerHTML = '';
-
+            
+            // Build endpoints based on target topology mapping
+            const rootTarget = isApproach2 ? `${BACKEND_URL}/` : `${BACKEND_URL}/`;
+            const dataTarget = isApproach2 ? `${BACKEND_URL}/api/data` : `${BACKEND_URL}/data`;
+            
             try {
-                // 1. Fetch from the backend's root endpoint (proxied)
-                const rootRes = await fetch(`${API_PROXY_PATH}/`);
+                // 1. Fetch from root endpoint
+                const rootRes = await fetch(rootTarget);
+                if (!rootRes.ok) throw new Error(`HTTP error! status: ${rootRes.status}`);
                 const rootData = await rootRes.json();
                 statusEl.innerHTML = `<span class="status-badge">${rootData.message}</span>`;
-
-                // 2. Fetch from the backend's data endpoint (proxied)
-                const dataRes = await fetch(`${API_PROXY_PATH}/data`);
+                
+                // 2. Fetch from task list data array
+                const dataRes = await fetch(dataTarget);
+                if (!dataRes.ok) throw new Error(`HTTP error! status: ${dataRes.status}`);
                 const data = await dataRes.json();
-
+                
                 data.items.forEach(item => {
                     const li = document.createElement('li');
                     li.innerHTML = `<strong>${item.name}</strong> - ${item.complete ? '✅ Done' : '⏳ In Progress'}`;
                     listEl.appendChild(li);
                 });
             } catch (error) {
-                statusEl.innerHTML = `<span style="color: red; font-weight: bold;">❌ Connection Error: Is the backend running and the proxy configured?</span>`;
+                statusEl.innerHTML = `<span style="color: red; font-weight: bold;">❌ Connection Failed.</span>`;
+                const li = document.createElement('li');
+                li.style.color = 'red';
+                li.innerHTML = `Ensure the targeted backend engine layer is currently active and reporting online.`;
+                listEl.appendChild(li);
                 console.error("Connection error:", error);
             }
         });
