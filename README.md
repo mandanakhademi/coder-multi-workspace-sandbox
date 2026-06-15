@@ -89,10 +89,31 @@ resource "coder_agent" "main" {
     # 4. Pull your project sandbox files
     if [ ! -d "backend" ]; then
       echo "--- 📥 Cloning Sandbox Repository ---"
-      git clone [https://github.com/mandanakhademi/coder-multi-workspace-sandbox.git](https://github.com/mandanakhademi/coder-multi-workspace-sandbox.git) temp-repo
+      git clone https://github.com/mandanakhademi/coder-multi-workspace-sandbox.git temp-repo
       cp -r temp-repo/. .
       rm -rf temp-repo
     fi
+
+    # === FORCE THE CORRECT PROXY FILE BEFORE COMPOSE LAUNCHES ===
+    echo "--- 🛠️ Injecting persistent proxy configuration into frontend ---"
+    cat << 'EOF' > ~/frontend/vite.config.js
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://backend:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
+})
+EOF
 
     # =====================================================
 
@@ -181,10 +202,10 @@ resource "coder_agent" "main" {
   }
 }
 
-# See [https://registry.coder.com/modules/coder/code-server](https://registry.coder.com/modules/coder/code-server)
+# See https://registry.coder.com/modules/coder/code-server
 module "code-server" {
   count  = data.coder_workspace.me.start_count
-  source = "[registry.coder.com/coder/code-server/coder](https://registry.coder.com/coder/code-server/coder)"
+  source = "registry.coder.com/coder/code-server/coder"
 
   # This ensures that the latest non-breaking version of the module gets downloaded, you can also pin the module version to prevent breaking changes in production.
   version = "~> 1.0"
@@ -193,10 +214,10 @@ module "code-server" {
   order    = 1
 }
 
-# See [https://registry.coder.com/modules/coder/jetbrains](https://registry.coder.com/modules/coder/jetbrains)
+# See https://registry.coder.com/modules/coder/jetbrains
 module "jetbrains" {
   count      = data.coder_workspace.me.start_count
-  source     = "[registry.coder.com/coder/jetbrains/coder](https://registry.coder.com/coder/jetbrains/coder)"
+  source     = "registry.coder.com/coder/jetbrains/coder"
   version    = "~> 1.1"
   agent_id   = coder_agent.main.id
   agent_name = "main"
@@ -237,9 +258,9 @@ resource "docker_container" "workspace" {
   # Uses lower() to avoid Docker restriction on container names.
   name  = "coder-${data.coder_workspace_owner.me.name}-${lower(data.coder_workspace.me.name)}"
   
-  # === CRITICAL MODIFICATION: NESTED CONTAINER RIGHTS ===
+  # === ADD THIS ONE LINE TO YOUR ORIGINAL BLOCK ===
   privileged = true
-  # =====================================================
+  # ===============================================
 
   # Hostname makes the shell more user friendly: coder@my-workspace:~$
   hostname = data.coder_workspace.me.name
