@@ -94,27 +94,6 @@ resource "coder_agent" "main" {
       rm -rf temp-repo
     fi
 
-    # === FORCE THE CORRECT PROXY FILE BEFORE COMPOSE LAUNCHES ===
-    echo "--- 🛠️ Injecting persistent proxy configuration into frontend ---"
-    cat << 'EOF' > ~/frontend/vite.config.js
-import { defineConfig } from 'vite'
-
-export default defineConfig({
-  server: {
-    host: '0.0.0.0',
-    port: 3000,
-    allowedHosts: true,
-    proxy: {
-      '/api': {
-        target: 'http://backend:8000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
-  }
-})
-EOF
-
     # =====================================================
 
     # 5. Execute your architectural configuration directly via Compose!
