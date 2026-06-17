@@ -1,13 +1,13 @@
 {
   "name": "Coder Single Workspace Sandbox",
   "dockerComposeFile": "docker-compose.yml",
-  "service": "workspace",
-  "workspaceFolder": "/workspace",
   
-  // Exposes both application ports to the host network automatically
+  // Change this from "workspace" to one of your actual compose services!
+  "service": "frontend", 
+  
+  "workspaceFolder": "/workspace/frontend",
   "forwardPorts": [3000, 8000],
   
-  // Adds human-readable labels to the ports inside the Coder interface
   "portsAttributes": {
     "3000": {
       "label": "Frontend App UI",
@@ -19,7 +19,6 @@
     }
   },
 
-  // Useful IDE extensions that will auto-install for whoever opens the workspace
   "customizations": {
     "vscode": {
       "extensions": [
