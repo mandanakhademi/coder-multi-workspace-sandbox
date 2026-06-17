@@ -1,9 +1,10 @@
 services:
   backend:
     image: mcr.microsoft.com/devcontainers/python:3.11
+    # === FIX: Natively run the python image across architectures ===
+    platform: linux/amd64
     working_dir: /workspace/backend
     volumes:
-      # === FIX: Use relative paths instead of absolute paths ===
       - ..:/workspace
     ports:
       - "8000:8000"
@@ -11,9 +12,10 @@ services:
 
   frontend:
     image: mcr.microsoft.com/devcontainers/javascript-node:18
+    # === FIX: Forces the dynamic uid Dockerfile builder to utilize the proper source ===
+    platform: linux/amd64
     working_dir: /workspace/frontend
     volumes:
-      # === FIX: Use relative paths instead of absolute paths ===
       - ..:/workspace
     ports:
       - "3000:3000"
