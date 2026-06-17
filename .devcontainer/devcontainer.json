@@ -5,7 +5,7 @@
   // Change this from "workspace" to one of your actual compose services!
   "service": "frontend", 
   
-  "workspaceFolder": "/workspace/frontend",
+  "workspaceFolder": "/workspace",
   "forwardPorts": [3000, 8000],
   
   "portsAttributes": {
