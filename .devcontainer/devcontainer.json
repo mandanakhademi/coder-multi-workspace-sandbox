@@ -1,24 +1,17 @@
 {
-  "name": "Coder Single Workspace Sandbox",
+  "name": "Coder Multi-Container Sandbox",
   "dockerComposeFile": "docker-compose.yml",
-  
-  // Change this from "workspace" to one of your actual compose services!
   "service": "frontend", 
-  
   "workspaceFolder": "/workspace",
-  "forwardPorts": [3000, 8000],
   
-  "portsAttributes": {
-    "3000": {
-      "label": "Frontend App UI",
-      "onAutoForward": "notify"
-    },
-    "8000": {
-      "label": "Backend Python API",
-      "onAutoForward": "silent"
-    }
-  },
+  // === FIX: Add this line to skip the dynamic ARM64 vs AMD64 docker build step ===
+  "updateRemoteUserUID": "never",
 
+  "forwardPorts":,
+  "portsAttributes": {
+    "3000": { "label": "Frontend App UI", "onAutoForward": "notify" },
+    "8000": { "label": "Backend Python API", "onAutoForward": "silent" }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
