@@ -3,7 +3,8 @@ services:
     image: mcr.microsoft.com/devcontainers/python:3.11
     working_dir: /workspace/backend
     volumes:
-      - /home/coder/backend:/workspace/backend
+      // === FIX: Mount the whole project root, mapping it to /workspace ===
+      - /home/coder:/workspace
     ports:
       - "8000:8000"
     command: sh -c "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000"
@@ -12,7 +13,8 @@ services:
     image: mcr.microsoft.com/devcontainers/javascript-node:18
     working_dir: /workspace/frontend
     volumes:
-      - /home/coder/frontend:/workspace/frontend
+      // === FIX: Mount the whole project root here as well ===
+      - /home/coder:/workspace
     ports:
       - "3000:3000"
     environment:
