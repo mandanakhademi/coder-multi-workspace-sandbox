@@ -4,7 +4,9 @@
   "service": "frontend", 
   "workspaceFolder": "/workspace",
   
-  // === FIX: Add this line to skip the dynamic ARM64 vs AMD64 docker build step ===
+  // === FORCE ROOT TO COMPLETELY BYPASS THE USER ID BUILD LAYER ===
+  "remoteUser": "root",
+  "containerUser": "root",
   "updateRemoteUserUID": "never",
 
   "forwardPorts":,
