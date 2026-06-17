@@ -1,11 +1,10 @@
 {
   "name": "Coder Multi-Container Sandbox",
-  // === CORRECTION: Look locally since both files are in the same directory ===
   "dockerComposeFile": "docker-compose.yml",
-  
-  "service": "frontend", 
+  "service": "frontend",
   "workspaceFolder": "/workspace",
   
+  // === CRUCIAL FOR CODER: Bypass dynamic user compilation errors ===
   "remoteUser": "root",
   "containerUser": "root",
   "updateRemoteUserUID": "never",
