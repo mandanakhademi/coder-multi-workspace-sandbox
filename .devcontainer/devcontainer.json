@@ -1,13 +1,8 @@
 {
   "name": "Coder Multi-Container Sandbox",
-
   "dockerComposeFile": "docker-compose.yml",
-
   "service": "frontend",
-
   "workspaceFolder": "/workspace",
-
-  "shutdownAction": "stopCompose",
 
   "customizations": {
     "vscode": {
