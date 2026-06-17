@@ -1,19 +1,31 @@
 {
   "name": "Coder Multi-Container Sandbox",
+  
+  // Specifies the relative path to your docker-compose file
   "dockerComposeFile": "docker-compose.yml",
-  "service": "frontend",
+  
+  // Attaches your IDE terminal process directly inside the frontend container service
+  "service": "frontend", 
+  
+  // Sets the workspace folder to the combined root path mapped by your compose volumes
   "workspaceFolder": "/workspace",
   
-  // === CRUCIAL FOR CODER: Bypass dynamic user compilation errors ===
-  "remoteUser": "root",
-  "containerUser": "root",
-  "updateRemoteUserUID": "never",
-
+  // Instructs Coder to automatically forward both application runtime ports
   "forwardPorts":,
+  
+  // Adds human-readable labels and behaviors to your architecture inside the Coder interface
   "portsAttributes": {
-    "3000": { "label": "Frontend App UI", "onAutoForward": "notify" },
-    "8000": { "label": "Backend Python API", "onAutoForward": "silent" }
+    "3000": {
+      "label": "Frontend App UI",
+      "onAutoForward": "notify"
+    },
+    "8000": {
+      "label": "Backend Python API",
+      "onAutoForward": "silent"
+    }
   },
+
+  // Useful IDE extensions that will auto-install when the workspace mounts
   "customizations": {
     "vscode": {
       "extensions": [
