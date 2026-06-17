@@ -1,7 +1,7 @@
 {
   "name": "Coder Multi-Container Sandbox",
-  // === FIX: Step out of the .devcontainer folder into the root directory ===
-  "dockerComposeFile": "../docker-compose.yml",
+  // === CORRECTION: Look locally since both files are in the same directory ===
+  "dockerComposeFile": "docker-compose.yml",
   
   "service": "frontend", 
   "workspaceFolder": "/workspace",
