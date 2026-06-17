@@ -1,10 +1,11 @@
 {
   "name": "Coder Multi-Container Sandbox",
-  "dockerComposeFile": "docker-compose.yml",
+  // === FIX: Step out of the .devcontainer folder into the root directory ===
+  "dockerComposeFile": "../docker-compose.yml",
+  
   "service": "frontend", 
   "workspaceFolder": "/workspace",
   
-  // === FORCE ROOT TO COMPLETELY BYPASS THE USER ID BUILD LAYER ===
   "remoteUser": "root",
   "containerUser": "root",
   "updateRemoteUserUID": "never",
