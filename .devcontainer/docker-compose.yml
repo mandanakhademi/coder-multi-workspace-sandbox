@@ -1,26 +1,24 @@
-{
-  "name": "Coder Multi-Container Sandbox",
-  // === CORRECTION: Look locally since both files are in the same directory ===
-  "dockerComposeFile": "docker-compose.yml",
-  
-  "service": "frontend", 
-  "workspaceFolder": "/workspace",
-  
-  "remoteUser": "root",
-  "containerUser": "root",
-  "updateRemoteUserUID": "never",
+version: "3.8"
 
-  "forwardPorts":,
-  "portsAttributes": {
-    "3000": { "label": "Frontend App UI", "onAutoForward": "notify" },
-    "8000": { "label": "Backend Python API", "onAutoForward": "silent" }
-  },
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-python.python",
-        "dbaeumer.vscode-eslint"
-      ]
-    }
-  }
-}
+services:
+  backend:
+    image: mcr.microsoft.com/devcontainers/python:3.11
+    working_dir: /workspace/backend
+    volumes:
+      - ..:/workspace
+    ports:
+      - "8000:8000"
+    command: sh -c "pip install -r /workspace/backend/requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000"
+
+  frontend:
+    image: mcr.microsoft.com/devcontainers/javascript-node:18
+    working_dir: /workspace/frontend
+    volumes:
+      - ..:/workspace
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    command: sh -c "cd /workspace/frontend && npm install && npx vite --host 0.0.0.0 --port 3000 --clearScreen false"
+    depends_on:
+      - backend
