@@ -1,34 +1,14 @@
 {
   "name": "Coder Multi-Container Sandbox",
+
   "dockerComposeFile": "docker-compose.yml",
+
   "service": "frontend",
+
   "workspaceFolder": "/workspace",
-  
-  // === FIX 1: Explicitly tell Coder/DevContainers exactly which ports to lock in ===
-  "forwardPorts":,
-  
-  "portsAttributes": {
-    "3000": {
-      "label": "Frontend App UI",
-      "onAutoForward": "notify"
-    },
-    "8000": {
-      "label": "Backend Python API",
-      "onAutoForward": "silent"
-    }
-  },
 
-  // === FIX 2: Mounts the Docker socket and installs the Docker CLI inside your terminal service ===
-  "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-      "version": "latest",
-      "enableNonRootDocker": "true"
-    }
-  },
+  "shutdownAction": "stopCompose",
 
-  "remoteUser": "root",
-  "containerUser": "root",
-  "updateRemoteUserUID": "never",
   "customizations": {
     "vscode": {
       "extensions": [
