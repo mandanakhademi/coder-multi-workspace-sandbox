@@ -1,19 +1,12 @@
 {
   "name": "Coder Multi-Container Sandbox",
-  
-  // Specifies the relative path to your docker-compose file
   "dockerComposeFile": "docker-compose.yml",
-  
-  // Attaches your IDE terminal process directly inside the frontend container service
-  "service": "frontend", 
-  
-  // Sets the workspace folder to the combined root path mapped by your compose volumes
+  "service": "frontend",
   "workspaceFolder": "/workspace",
   
-  // Instructs Coder to automatically forward both application runtime ports
+  // === FIX 1: Explicitly tell Coder/DevContainers exactly which ports to lock in ===
   "forwardPorts":,
   
-  // Adds human-readable labels and behaviors to your architecture inside the Coder interface
   "portsAttributes": {
     "3000": {
       "label": "Frontend App UI",
@@ -25,7 +18,17 @@
     }
   },
 
-  // Useful IDE extensions that will auto-install when the workspace mounts
+  // === FIX 2: Mounts the Docker socket and installs the Docker CLI inside your terminal service ===
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "latest",
+      "enableNonRootDocker": "true"
+    }
+  },
+
+  "remoteUser": "root",
+  "containerUser": "root",
+  "updateRemoteUserUID": "never",
   "customizations": {
     "vscode": {
       "extensions": [
