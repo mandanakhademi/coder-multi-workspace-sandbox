@@ -6,11 +6,15 @@ This repository contains a dual-tier microservice sandbox (a Vite-powered fronte
 2. **Approach 2**: Multiple, isolated, unprivileged workspace container islands cross-routed via Coder's path-based proxy.
 
 ## Architecture 1: Single Workspace via Docker-in-Docker (DinD)
+
 ### Strategy Overview
+
 This pattern consolidates both tiers into a single Coder workspace container. It uses a nested hypervisor background daemon (dockerd) to spin up sub-containers on an isolated virtual network bridge. This approach natively leverages your standard devcontainer.json specifications, though it requires enabling kernel-level root privileges (privileged = true).
 
 ### Coder Template Configuration
+
 To implement Approach 1, you should replace the template's main.tf with the following code configuration:
+
 ```terraform
 terraform {
   required_providers {
@@ -47,36 +51,38 @@ resource "coder_agent" "main" {
   os             = "linux"
   startup_script = <<-EOT
     set -e
-
     # Prepare user home with default files on first start.
     if [ ! -f ~/.init_done ]; then
       cp -rT /etc/skel ~
       touch ~/.init_done
     fi
 
-    # Add any commands that should be executed at workspace startup (e.g install requirements, start a program, etc) here
-    echo "--- 📦 Bootstrapping Environment for Docker Compose ---"
+    echo "--- 📦 Bootstrapping Environment for DevContainers ---"
     sudo apt-get update
 
-    # 1. Install Node.js & npm (Kept for environment stability)
+    # 1. Ensure Node.js & npm are installed (Required to run the DevContainer CLI)
     echo "--- 🟢 Installing Node and NPM ---"
     sudo apt-get install -y nodejs npm
 
-    # 2. Install Docker Natively
+    # 2. Install DevContainer CLI natively via npm global
+    echo "--- 🛠️ Installing DevContainer CLI ---"
+    if ! command -v devcontainer &> /dev/null; then
+      sudo npm install -g @devcontainers/cli
+    fi
+
+    # 3. Install Docker Natively
     echo "--- 🐳 Installing Docker Engine ---"
     if ! command -v docker &> /dev/null; then
       sudo apt-get install -y docker.io
       sudo usermod -aG docker coder
     fi
 
-    # 3. Natively start and wait for the Docker background engine using VFS fallback driver
+    # 4. Natively start and wait for the Docker background engine
     echo "--- 🔌 Starting Docker Daemon Service ---"
     if ! pgrep dockerd > /dev/null; then
-      # Passing the VFS driver bypasses the layer conversion errors inside user namespaces!
       sudo dockerd --storage-driver vfs > /tmp/dockerd.log 2>&1 &
     fi
-    
-    # Wait up to 10 seconds for the docker socket to become active
+
     for i in {1..10}; do
       if sudo docker info &> /dev/null; then
         echo "--- ✅ Docker engine is live and responding! ---"
@@ -86,8 +92,8 @@ resource "coder_agent" "main" {
       sleep 1
     done
 
-    # 4. Pull your project sandbox files
-    if [ ! -d "backend" ]; then
+    # 5. Pull your project sandbox files
+    if [ ! -d ".devcontainer" ]; then
       echo "--- 📥 Cloning Sandbox Repository ---"
       git clone https://github.com/mandanakhademi/coder-multi-workspace-sandbox.git temp-repo
       cp -r temp-repo/. .
@@ -95,12 +101,13 @@ resource "coder_agent" "main" {
     fi
 
     # =====================================================
+    # 6. Execute your architectural configuration via DevContainer CLI!
+    echo "--- 🚀 Building and Running via devcontainer.json ---"
 
-    # 5. Execute your architectural configuration directly via Compose!
-    echo "--- 🚀 Launching Multi-Container Environment via Compose ---"
-    cd .devcontainer
-    docker compose down --remove-orphans || true # Ensure we clear any stuck layers
-    docker compose up -d --remove-orphans
+    # This natively builds the workspace using your devcontainer.json specs,
+    # installing extensions, features, and setting up the defined environment variables.
+    devcontainer up --workspace-folder .
+
   EOT
 
   # These environment variables allow you to make Git commits right away after creating a
@@ -236,7 +243,7 @@ resource "docker_container" "workspace" {
   image = "codercom/enterprise-base:ubuntu"
   # Uses lower() to avoid Docker restriction on container names.
   name  = "coder-${data.coder_workspace_owner.me.name}-${lower(data.coder_workspace.me.name)}"
-  
+
   # === ADD THIS ONE LINE TO YOUR ORIGINAL BLOCK ===
   privileged = true
   # ===============================================
@@ -274,76 +281,4 @@ resource "docker_container" "workspace" {
     value = data.coder_workspace.me.name
   }
 }
-```
-
-### Presentation Layer Manual Interface Replacement (index.html)
-You need to open a terminal on the workspace and run the following commands to replace the index.html file.
-```bash
-cd frontend
-cat << 'EOF' > index.html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GDS Coder Frontend</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; background: #f4f6f8; color: #333; }
-        .card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 600px; margin-bottom: 20px; }
-        .status-badge { background: #d4edda; color: #155724; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9em; display: inline-block; }
-        button { background: #005a36; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1em; }
-        button:hover { background: #004428; }
-    </style>
-</head>
-<body>
-
-    <div class="card">
-        <h1>🌐 Coder UI Sandbox Workspace</h1>
-        <p>This frontend application is running on port <strong>3000</strong>.</p>
-        <button id="fetchBtn">Fetch Data from Backend</button>
-    </div>
-
-    <div class="card" id="apiResponseCard" style="display: none;">
-        <h3>📡 Backend Connection Status:</h3>
-        <p id="backendStatus"><span class="status-badge">Connecting...</span></p>
-        <h3>📋 Data Retrieved:</h3>
-        <ul id="dataList"></ul>
-    </div>
-
-    <script type="module">
-        // Points natively to the internal container channel path
-        const PROXY_URL = '/api';
-
-        document.getElementById('fetchBtn').addEventListener('click', async () => {
-            const responseCard = document.getElementById('apiResponseCard');
-            const statusEl = document.getElementById('backendStatus');
-            const listEl = document.getElementById('dataList');
-
-            responseCard.style.display = 'block';
-            listEl.innerHTML = '';
-
-            try {
-                // 1. Fetch from root endpoint
-                const rootRes = await fetch(`${PROXY_URL}/`);
-                const rootData = await rootRes.json();
-                statusEl.innerHTML = `<span class="status-badge">${rootData.message}</span>`;
-
-                // 2. Fetch from data endpoint
-                const dataRes = await fetch(`${PROXY_URL}/api/data`);
-                const data = await dataRes.json();
-
-                data.items.forEach(item => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<strong>${item.name}</strong> - ${item.complete ? '✅ Done' : '⏳ In Progress'}`;
-                    listEl.appendChild(li);
-                });
-            } catch (error) {
-                statusEl.innerHTML = `<span style="color: red; font-weight: bold;">❌ Cannot connect to backend proxy context</span>`;
-                console.error("Connection error:", error);
-            }
-        });
-    </script>
-</body>
-</html>
-EOF
 ```
